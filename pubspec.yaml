@@ -1,0 +1,11 @@
+name: browser_controller
+version: 0.00.1-dev
+authors: ["Dart Team <misc@dartlang.org>"]
+homepage: http://www.dartlang.org
+description: >
+ Package for browser test automation. 
+dependencies:
+  path: any
+  args: any
+environment:
+  sdk: any

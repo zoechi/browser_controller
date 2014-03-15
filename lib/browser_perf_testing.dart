@@ -29,11 +29,7 @@ final Map SERVER_CONFIG = {
 void main (List<String> args) {
   var options = _parseArguments(args);
 
-  // Yikes! We're assuming the code_root is one level above the package root,
-  // because we have no other way to determine paths aside from Platform.script,
-  // which could be pretty much any path.
-  var codeRoot = path.dirname(Platform.packageRoot);
-
+  var codeRoot = options['code_root'];
   // Start a server to serve the entire repo: the http server is available on
   // window.location.port.
   var servers = new TestingServers(
@@ -54,7 +50,10 @@ Map _parseArguments(List<String> args) {
       'wish to run. This is in a form that can be served up by '
       'http_server.dart, so it begins with /code_root or some other server '
       'understood prefix.');
-  parser.addOption('checked', defaultsTo: false,
+  parser.addOption('code_root', help: 'Path to the code we want to serve. By '
+      'default this is one directory above the packageRoot.', defaultsTo:
+      path.dirname(Platform.packageRoot));
+  parser.addOption('checked', defaultsTo: 'false',
       help: 'Run this test in checked mode.');
   parser.addFlag('help', abbr: 'h', negatable: false, callback: (help) {
     if (help) {
@@ -62,7 +61,7 @@ Map _parseArguments(List<String> args) {
       exit(0);
     };
   });
-  parser.addOption('timeout', defaultsTo: 300,
+  parser.addOption('timeout', defaultsTo: '300',
       help: 'Maximum amount of time to let a test run, in seconds.');
   return parser.parse(args);
 }
@@ -85,12 +84,13 @@ void _runPerfTests(Map options, TestingServers servers) {
         }
         testRunner.terminate();
         servers.stopServers();
-      }, options['timeout']);
+      }, int.parse(options['timeout']));
 
   testRunner.start().then((started) {
     if (started) {
       testRunner.queueTest(browserTest);
     } else {
+      // TODO(efortuna): Then try again!
       print("Issue starting browser test runner $started");
       exit(1);
     }

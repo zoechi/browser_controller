@@ -170,7 +170,7 @@ class TestingServers {
       var packagesIndex = pathSegments.indexOf(packagesDirName);
       if (packagesIndex != -1) {
         var start = packagesIndex + 1;
-        basePath = path.join(_buildDirectory, packagesDirName);
+        basePath = path.join(_codeRoot, packagesDirName);
         relativePath = pathSegments.skip(start).join('/');
         DebugLogger.warning('the new relative path is $relativePath $basePath');
       }

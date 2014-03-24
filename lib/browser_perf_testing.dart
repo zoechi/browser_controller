@@ -8,11 +8,12 @@
 /// package since it relies on test.dart files!
 library browser_perf_testing;
 
+import 'package:path/path.dart' as path;
+import 'package:args/args.dart' as args_parser;
+
 import 'browser_controller.dart';
 import 'src/http_server.dart';
 import 'dart:io';
-import 'package:path/path.dart' as path;
-import 'package:args/args.dart' as args_parser;
 
 const String ADDRESS = '127.0.0.1';
 
@@ -54,6 +55,8 @@ args_parser.ArgResults _parseArguments(List<String> args) {
       help: 'Run this test in checked mode.');
   parser.addOption('window', defaultsTo: 'false',
       help: 'Open test in a separate window, rather than an iframe.');
+  parser.addOption('executable', help: 'Path to the browser executable (if '
+      'nonstandard).', defaultsTo: '');
   parser.addFlag('help', abbr: 'h', negatable: false, callback: (help) {
     if (help) {
       print(parser.getUsage());
@@ -65,14 +68,15 @@ args_parser.ArgResults _parseArguments(List<String> args) {
   return parser.parse(args);
 }
 
-void _runPerfTests(Map options, TestingServers servers) {
+void _runPerfTests(args_parser.ArgResults options, TestingServers servers) {
   var browserName = options['browser'];
 
   var testRunner = new BrowserTestRunner(SERVER_CONFIG, ADDRESS, browserName, 1,
       checkedMode: options['checked'],
       testingServer: new BrowserTestingServer(SERVER_CONFIG, ADDRESS,
           options['window']),
-      separateWindow: options['window']);
+      separateWindow: options['window'],
+      executable: options['executable']);
 
   var url = 'http://$ADDRESS:${servers.port}${options["test_path"]}';
 
@@ -86,13 +90,21 @@ void _runPerfTests(Map options, TestingServers servers) {
         servers.stopServers();
       }, int.parse(options['timeout']));
 
+  _startRunner(testRunner, browserTest, 3);
+}
+
+_startRunner(BrowserTestRunner testRunner, BrowserTest browserTest,
+    num numRetries) {
   testRunner.start().then((started) {
     if (started) {
       testRunner.queueTest(browserTest);
     } else {
-      // TODO(efortuna): Then try again!
-      print("Issue starting browser test runner $started");
-      exit(1);
+      if (numRetries > 0) {
+        _startRunner(testRunner, browserTest, numRetries - 1);
+      } else {
+        print("Issue starting browser test runner $started");
+        exit(1);
+      }
     }
   });
 }

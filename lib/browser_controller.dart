@@ -767,6 +767,10 @@ class BrowserTestRunner {
 
   BrowserTestingServer testingServer;
 
+  /// The executable for the browser being tested (if not the standard
+  /// location).
+  String executable;
+
   /**
    * The TestRunner takes the testingServer in as a constructor parameter in
    * case we wish to have a testing server with different behavior (such as the
@@ -778,7 +782,8 @@ class BrowserTestRunner {
                     this.maxNumBrowsers,
                     {bool this.checkedMode: false,
                     BrowserTestingServer this.testingServer,
-                    bool this.separateWindow: false});
+                    bool this.separateWindow: false,
+                    String this.executable: ''});
 
   Future<bool> start() {
     // If [browserName] doesn't support opening new windows, we use new iframes
@@ -1079,7 +1084,10 @@ class BrowserTestRunner {
 
   Browser getInstance() {
     if (browserName == 'ff') browserName = 'firefox';
-    var path = Locations.getBrowserLocation(browserName, globalConfiguration);
+    var path = executable;
+    if (path == '') {
+      path = Locations.getBrowserLocation(browserName, globalConfiguration);
+    }
     var browser = new Browser.byName(browserName, path, checkedMode);
     browser.logger = logger;
     return browser;

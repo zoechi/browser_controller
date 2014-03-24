@@ -216,31 +216,31 @@ class AdbDevice {
   /**
    * Download data form the device.
    */
-  Future pullData(Path remote, Path local) {
-    return _adbCommand(['pull', '$remote', '$local']);
+  Future pullData(String remote, String local) {
+    return _adbCommand(['pull', remote, local]);
   }
 
   /**
    * Upload data to the device.
    */
-  Future pushData(Path local, Path remote) {
-    return _adbCommand(['push', '$local', '$remote']);
+  Future pushData(String local, String remote) {
+    return _adbCommand(['push', local, remote]);
   }
 
   /**
    * Change permission of directory recursively.
    */
-  Future chmod(String mode, Path directory) {
-    var arguments = ['shell', 'chmod', '-R', mode, '$directory'];
+  Future chmod(String mode, String directory) {
+    var arguments = ['shell', 'chmod', '-R', mode, directory];
     return _adbCommand(arguments);
   }
 
   /**
    * Install an application on the device.
    */
-  Future installApk(Path filename) {
+  Future installApk(String filename) {
     return _adbCommand(
-        ['install', '-i', 'com.google.android.feedback', '-r', '$filename']);
+        ['install', '-i', 'com.google.android.feedback', '-r', filename]);
   }
 
   /**

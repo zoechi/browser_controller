@@ -5,7 +5,6 @@
 library utils;
 
 import 'dart:io';
-import 'dart:math';
 import 'dart:convert';
 
 
@@ -24,10 +23,10 @@ class DebugLogger {
   /**
    * If [path] was null, the DebugLogger will write messages to stdout.
    */
-  static init(Path path, {append: false}) {
+  static init(String path, {append: false}) {
     if (path != null) {
       var mode = append ? FileMode.APPEND : FileMode.WRITE;
-      _sink = new File(path.toNativePath()).openWrite(mode: mode);
+      _sink = new File(path).openWrite(mode: mode);
     }
   }
 

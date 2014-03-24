@@ -11,6 +11,8 @@ import "dart:io";
 import 'src/android.dart';
 import 'src/utils.dart';
 
+import 'package:path/path.dart' as pathPkg;
+
 class BrowserOutput {
   final StringBuffer stdout = new StringBuffer();
   final StringBuffer stderr = new StringBuffer();
@@ -81,8 +83,6 @@ abstract class Browser {
 
   static const List<String> SUPPORTED_BROWSERS =
     const ['safari', 'ff', 'firefox', 'chrome', 'ie9', 'ie10', 'dartium'];
-
-  static const List<String> BROWSERS_WITH_WINDOW_SUPPORT = const [];
 
   // TODO(kustermann): add standard support for chrome on android
   static bool supportedBrowser(String name) {
@@ -576,17 +576,21 @@ class AndroidChrome extends Browser {
     var turnScreenOnIntent =
         new Intent(mainAction, turnScreenOnPackage, '.Main');
 
-    var testing_resources_dir =
-        new Path('third_party/android_testing_resources');
-    if (!new Directory(testing_resources_dir.toNativePath()).existsSync()) {
+    var testing_resources_dir = 'third_party/android_testing_resources';
+    if (!new Directory(pathPkg.absolute(testing_resources_dir)).existsSync()) {
       DebugLogger.error("$testing_resources_dir doesn't exist. Exiting now.");
       exit(1);
     }
 
-    var chromeAPK = testing_resources_dir.append('com.android.chrome-1.apk');
-    var turnScreenOnAPK = testing_resources_dir.append('TurnScreenOn.apk');
-    var chromeConfDir = testing_resources_dir.append('chrome_configuration');
-    var chromeConfDirRemote = new Path('/data/user/0/com.android.chrome/');
+    var chromeAPK = pathPkg.join(
+        testing_resources_dir, 'com.android.chrome-1.apk');
+    var turnScreenOnAPK = pathPkg.join(
+        testing_resources_dir, 'TurnScreenOn.apk');
+    var chromeConfDir = pathPkg.join(
+        testing_resources_dir, 'chrome_configuration');
+    // TODO(efortuna): This path is a holdover from the source in the Dart repo
+    // at tools/testing/dart, but is clearly not cross-platform.
+    var chromeConfDirRemote = '/data/user/0/com.android.chrome/';
 
     return _adbDevice.waitForBootCompleted().then((_) {
       return _adbDevice.forceStop(chromeIntent.package);
@@ -630,7 +634,7 @@ class Firefox extends Browser {
   static const String disableScriptTimeLimit =
       'user_pref("dom.max_script_run_time", 0);';
 
-  Future _createPreferenceFile(var path) {
+  void _createPreferenceFile(var path) {
     var file = new File("${path.toString()}/user.js");
     var randomFile = file.openSync(mode: FileMode.WRITE);
     randomFile.writeStringSync(enablePopUp);
@@ -741,6 +745,9 @@ class BrowserTestRunner {
   String localIp;
   String browserName;
   int maxNumBrowsers;
+  /// Set to true if we want to open the test in separate window instead of an
+  /// iframe.
+  bool separateWindow;
   // Used to send back logs from the browser (start, stop etc)
   Function logger;
   int browserIdCount = 0;
@@ -770,13 +777,13 @@ class BrowserTestRunner {
                     this.browserName,
                     this.maxNumBrowsers,
                     {bool this.checkedMode: false,
-                    BrowserTestingServer this.testingServer});
+                    BrowserTestingServer this.testingServer,
+                    bool this.separateWindow: false});
 
   Future<bool> start() {
     // If [browserName] doesn't support opening new windows, we use new iframes
     // instead.
-    bool useIframe =
-        !Browser.BROWSERS_WITH_WINDOW_SUPPORT.contains(browserName);
+    bool useIframe = separateWindow;
     if (testingServer == null) {
       testingServer = new BrowserTestingServer(
           globalConfiguration, localIp, useIframe);

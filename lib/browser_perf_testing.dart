@@ -9,15 +9,12 @@
 library browser_perf_testing;
 
 import 'browser_controller.dart';
-import 'src/utils.dart';
 import 'src/http_server.dart';
-import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 import 'package:path/path.dart' as path;
 import 'package:args/args.dart' as args_parser;
 
-final String ADDRESS = '127.0.0.1';
+const String ADDRESS = '127.0.0.1';
 
 /// A map that is passed to the testing framework to specify what ports the
 /// browser controller runs on.
@@ -42,7 +39,7 @@ void main (List<String> args) {
 }
 
 /// Helper function to parse the arguments for this file.
-Map _parseArguments(List<String> args) {
+args_parser.ArgResults _parseArguments(List<String> args) {
   var parser =  new args_parser.ArgParser();
   parser.addOption('browser', defaultsTo: 'chrome', help: 'Name of the browser'
       ' to run this test with.');
@@ -55,6 +52,8 @@ Map _parseArguments(List<String> args) {
       path.dirname(Platform.packageRoot));
   parser.addOption('checked', defaultsTo: 'false',
       help: 'Run this test in checked mode.');
+  parser.addOption('window', defaultsTo: 'false',
+      help: 'Open test in a separate window, rather than an iframe.');
   parser.addFlag('help', abbr: 'h', negatable: false, callback: (help) {
     if (help) {
       print(parser.getUsage());
@@ -72,7 +71,8 @@ void _runPerfTests(Map options, TestingServers servers) {
   var testRunner = new BrowserTestRunner(SERVER_CONFIG, ADDRESS, browserName, 1,
       checkedMode: options['checked'],
       testingServer: new BrowserTestingServer(SERVER_CONFIG, ADDRESS,
-          !Browser.BROWSERS_WITH_WINDOW_SUPPORT.contains(browserName)));
+          options['window']),
+      separateWindow: options['window']);
 
   var url = 'http://$ADDRESS:${servers.port}${options["test_path"]}';
 
